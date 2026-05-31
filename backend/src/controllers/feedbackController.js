@@ -7,12 +7,24 @@ export const createFeedback = asyncHandler(async (req, res) => {
 });
 
 export const getFeedback = asyncHandler(async (req, res) => {
-  const feedback = await Feedback.find()
+  // Admin should see all feedback.
+  if (req.user?.role === "admin") {
+    const feedback = await Feedback.find()
+      .populate("user", "name email")
+      .populate("businessIdea", "title")
+      .populate("mentor");
+    return res.json(feedback);
+  }
+
+  // Learners/mentors should only see their own feedback.
+  const feedback = await Feedback.find({ user: req.user._id })
     .populate("user", "name email")
     .populate("businessIdea", "title")
     .populate("mentor");
-  res.json(feedback);
+
+  return res.json(feedback);
 });
+
 
 export const updateFeedbackStatus = asyncHandler(async (req, res) => {
   const feedback = await Feedback.findByIdAndUpdate(
